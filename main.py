@@ -2,8 +2,9 @@ import os
 import json
 import pandas as pd
 import geopandas as gpd
-from gspread_dataframe import set_with_dataframe
 import gspread
+import requests
+from gspread_dataframe import set_with_dataframe
 
 
 service_account_info = json.loads(os.environ["GCP_CREDENTIALS"])
@@ -20,10 +21,8 @@ df = df.rename(columns={"acq_date": "date"})
 selected_cols = ["latitude", "longitude", "date", "satellite", "instrument"]
 df = df[selected_cols]
 
-
 df["latitude"] = df["latitude"].astype(str).str.replace(",", ".").astype(float)
 df["longitude"] = df["longitude"].astype(str).str.replace(",", ".").astype(float)
-
 df["date"] = pd.to_datetime(df["date"], errors="coerce")
 
 gdf_points = gpd.GeoDataFrame(
@@ -35,11 +34,21 @@ gdf_points = gpd.GeoDataFrame(
 
 desa_path = "data/Desa.json"
 pemilik_path = "data/PemilikLahan.json"
-lulc_path = "data/LULC.json"
 
 gdf_desa = gpd.read_file(desa_path).to_crs("EPSG:4326")
 gdf_pemilik = gpd.read_file(pemilik_path).to_crs("EPSG:4326")
+
+
+lulc_url = "https://drive.google.com/uc?export=download&id=1TdLkZuxUAbjLhY6WyJIkXwe3q49Uu5fg"
+lulc_path = "data/LULC.json"
+
+os.makedirs("data", exist_ok=True)
+r = requests.get(lulc_url)
+with open(lulc_path, "wb") as f:
+    f.write(r.content)
+
 gdf_lulc = gpd.read_file(lulc_path).to_crs("EPSG:4326")
+
 
 gdf_join = gpd.sjoin(
     gdf_points, gdf_desa[["nama_kel", "geometry"]], predicate="within"
