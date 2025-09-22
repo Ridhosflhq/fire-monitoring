@@ -5,7 +5,7 @@ import geopandas as gpd
 import gspread
 import requests
 from gspread_dataframe import set_with_dataframe
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
 service_account_info = json.loads(os.environ["GCP_CREDENTIALS"])
 gc = gspread.service_account_from_dict(service_account_info)
@@ -113,7 +113,9 @@ try:
     except gspread.exceptions.WorksheetNotFound:
         worksheet_log = sh_target.add_worksheet(title="RunTime", rows="10", cols="2")
 
-    now = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")
+    WIB = timezone(timedelta(hours=7))
+    now = datetime.now(WIB).strftime("%Y-%m-%d %H:%M:%S WIB")
+
     df_log = pd.DataFrame({"Last_Run": [now]})
 
     worksheet_log.clear()
