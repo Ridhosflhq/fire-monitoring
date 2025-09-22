@@ -113,7 +113,8 @@ try:
         worksheet_log = sh_target.add_worksheet(title="RunTime", rows="10", cols="2")
 
     now = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")
-    df_log = pd.DataFrame([{"Last_Run": now}])
+
+    df_log = pd.DataFrame({"Last_Run": [now]})
 
     worksheet_log.clear()
     set_with_dataframe(
@@ -123,6 +124,6 @@ try:
         include_column_header=True
     )
 
-    print(f"Logged latest run time: {now}")
+    print(f" Logged latest run time: {now}")
 except Exception as e:
-    print(f"Failed to log run time: {e}")
+    print(f" Failed to log run time: {e}")
