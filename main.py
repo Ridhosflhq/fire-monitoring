@@ -6,17 +6,19 @@ import gspread
 import requests
 from gspread_dataframe import set_with_dataframe
 
-
 service_account_info = json.loads(os.environ["GCP_CREDENTIALS"])
 gc = gspread.service_account_from_dict(service_account_info)
-
 
 spreadsheet_id_source = "1s7jnrnlSpyGdKHuNYK1XasveO7u_ESTv1mkpxQXTHAI"
 sh_source = gc.open_by_key(spreadsheet_id_source)
 worksheet_source = sh_source.get_worksheet(0)
 df = pd.DataFrame(worksheet_source.get_all_records())
 
-df.columns = df.columns.str.strip().str.lower()
+if df.empty:
+    print("Google Sheet is empty. No data to process.")
+    exit(0)  
+    
+df.columns = df.columns.astype(str).str.strip().str.lower()
 df = df.rename(columns={"acq_date": "date"})
 selected_cols = ["latitude", "longitude", "date", "satellite", "instrument"]
 df = df[selected_cols]
@@ -31,13 +33,11 @@ gdf_points = gpd.GeoDataFrame(
     crs="EPSG:4326"
 )
 
-
 desa_path = "data/Desa.json"
 pemilik_path = "data/PemilikLahan.json"
 
 gdf_desa = gpd.read_file(desa_path).to_crs("EPSG:4326")
 gdf_pemilik = gpd.read_file(pemilik_path).to_crs("EPSG:4326")
-
 
 lulc_url = "https://drive.google.com/uc?export=download&id=1TdLkZuxUAbjLhY6WyJIkXwe3q49Uu5fg"
 lulc_path = "data/LULC.json"
@@ -48,7 +48,6 @@ with open(lulc_path, "wb") as f:
     f.write(r.content)
 
 gdf_lulc = gpd.read_file(lulc_path).to_crs("EPSG:4326")
-
 
 gdf_join = gpd.sjoin(
     gdf_points, gdf_desa[["nama_kel", "geometry"]], predicate="within"
@@ -72,7 +71,6 @@ gdf_result["Ket"] = "Titik Api"
 final_cols = ["latitude", "longitude", "date", "satellite", "instrument",
               "owner", "village", "LC", "Blok", "Ket"]
 gdf_result = gdf_result[final_cols]
-
 
 spreadsheet_id_target = "1QRsiwK-3vlEU8991xsFsFvWdmyeuMTvSnATxxWRZEfk"
 sh_target = gc.open_by_key(spreadsheet_id_target)
@@ -107,5 +105,3 @@ if not gdf_result.empty:
         include_column_header=False
     )
 
-print("Data baru berhasil ditambahkan:", len(gdf_result), "record")
-print(sh_target.url)
