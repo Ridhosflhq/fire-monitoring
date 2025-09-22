@@ -8,8 +8,6 @@ on:
     - cron: "0 10 * * *"
     # 19:00 WIB (12:00 UTC)
     - cron: "0 12 * * *"
-    #test
-    - cron: "0 13 * * *"
   workflow_dispatch:
 jobs:
   run-script:
