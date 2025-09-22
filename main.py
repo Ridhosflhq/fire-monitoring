@@ -122,3 +122,7 @@ try:
         include_index=False,
         include_column_header=True
     )
+
+    print(f"Logged latest run time: {now}")
+except Exception as e:
+    print(f"Failed to log run time: {e}")
