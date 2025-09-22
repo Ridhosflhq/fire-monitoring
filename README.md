@@ -7,3 +7,7 @@ Github action-python automation function that runs script at:
 
 
 ## Workflow
+
+![Workflow Diagram](Flowchart.png)
+
+latest version: 22 September 2025
