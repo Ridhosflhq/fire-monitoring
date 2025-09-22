@@ -5,6 +5,7 @@ import geopandas as gpd
 import gspread
 import requests
 from gspread_dataframe import set_with_dataframe
+from datetime import datetime
 
 service_account_info = json.loads(os.environ["GCP_CREDENTIALS"])
 gc = gspread.service_account_from_dict(service_account_info)
@@ -16,8 +17,8 @@ df = pd.DataFrame(worksheet_source.get_all_records())
 
 if df.empty:
     print("Google Sheet is empty. No data to process.")
-    exit(0)  
-    
+    exit(0)
+
 df.columns = df.columns.astype(str).str.strip().str.lower()
 df = df.rename(columns={"acq_date": "date"})
 selected_cols = ["latitude", "longitude", "date", "satellite", "instrument"]
@@ -105,3 +106,19 @@ if not gdf_result.empty:
         include_column_header=False
     )
 
+try:
+    try:
+        worksheet_log = sh_target.worksheet("RunTime")
+    except gspread.exceptions.WorksheetNotFound:
+        worksheet_log = sh_target.add_worksheet(title="RunTime", rows="10", cols="2")
+
+    now = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")
+    df_log = pd.DataFrame([{"Last_Run": now}])
+
+    worksheet_log.clear()
+    set_with_dataframe(
+        worksheet_log,
+        df_log,
+        include_index=False,
+        include_column_header=True
+    )
