@@ -19,13 +19,25 @@ if df.empty:
     print("Data is empty. No data to process.")
 else:
     df.columns = df.columns.astype(str).str.strip().str.lower()
-    df = df.rename(columns={"acq_date": "Tanggal"})
-    selected_cols = ["latitude", "longitude", "Tanggal", "satellite", "instrument"]
+    df = df.rename(columns={"acq_date": "Tanggal", "acq_time": "JamRaw"})
+    selected_cols = ["latitude", "longitude", "Tanggal", "JamRaw", "satellite", "instrument"]
     df = df[selected_cols]
 
     df["latitude"] = df["latitude"].astype(str).str.replace(",", ".").astype(float)
     df["longitude"] = df["longitude"].astype(str).str.replace(",", ".").astype(float)
+
     df["Tanggal"] = pd.to_datetime(df["Tanggal"], errors="coerce")
+
+    def convert_acq_time(val):
+        try:
+            val = str(int(val)).zfill(4) 
+            hh, mm = int(val[:2]), int(val[2:])
+            return datetime.strptime(f"{hh}:{mm}", "%H:%M").strftime("%I:%M:%S %p")
+        except:
+            return None
+
+    df["Jam"] = df["JamRaw"].apply(convert_acq_time)
+    df = df.drop(columns=["JamRaw"])
 
     gdf_points = gpd.GeoDataFrame(
         df,
@@ -56,18 +68,20 @@ else:
     ).drop(columns=["index_right"])
 
     gdf_join = gpd.sjoin(
-        gdf_join, gdf_lulc[["LC23", "Blok", "geometry"]], predicate="within"
+        gdf_join, gdf_lulc[["Class23", "Blok", "geometry"]], predicate="within"
     ).drop(columns=["index_right"])
 
     gdf_result = gdf_join.rename(columns={
         "nama_kel": "Desa",
         "Owner": "Owner",
-        "LC23": "Penutup Lahan",
+        "Class23": "Penutup Lahan",
         "date": "Tanggal"
     })
     gdf_result["Ket"] = "Titik Api"
 
-    final_cols = ["latitude", "longitude", "Tanggal", "satellite", "instrument",
+    gdf_result["Desa"] = gdf_result["Desa"].str.title()
+
+    final_cols = ["latitude", "longitude", "Tanggal", "Jam", "satellite", "instrument",
                   "Owner", "Desa", "Penutup Lahan", "Blok", "Ket"]
     gdf_result = gdf_result[final_cols]
 
@@ -96,7 +110,7 @@ else:
         gdf_result = gdf_result.drop(columns=["key"])
 
     if not gdf_result.empty:
-        gdf_result = gdf_result.sort_values(by="Tanggal", ascending=True)
+        gdf_result = gdf_result.sort_values(by=["Tanggal", "Jam"], ascending=True)
 
         start_row = len(df_existing) + 2
         set_with_dataframe(
@@ -116,7 +130,7 @@ try:
         worksheet_log = sh_target.add_worksheet(title="RunTime", rows="10", cols="2")
 
     WIB = timezone(timedelta(hours=7))
-    now = datetime.now(WIB).strftime("%Y-%m-%d %H:%M:%S WIB")
+    now = datetime.now(WIB).strftime("%Y-%m-%d %I:%M:%S %p WIB")
 
     df_log = pd.DataFrame({"Last_Run": [now]})
 
