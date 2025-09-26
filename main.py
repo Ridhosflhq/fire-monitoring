@@ -54,7 +54,7 @@ else:
     gdf_pemilik = gpd.read_file(pemilik_path).to_crs("EPSG:4326")
     gdf_blok = gpd.read_file(blok_path).to_crs("EPSG:4326")
 
-    lulc_url = "ttps://drive.google.com/uc?export=download&id=1uy1VJruyiwsZBcdv5YYRTI9EcAWZVB2O"
+    lulc_url = "https://drive.google.com/uc?export=download&id=1uy1VJruyiwsZBcdv5YYRTI9EcAWZVB2O"
     lulc_path = "data/LULC.json"
     os.makedirs("data", exist_ok=True)
     if not os.path.exists(lulc_path):
