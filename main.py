@@ -19,13 +19,13 @@ if df.empty:
     print("Data is empty. No data to process.")
 else:
     df.columns = df.columns.astype(str).str.strip().str.lower()
-    df = df.rename(columns={"acq_date": "date"})
-    selected_cols = ["latitude", "longitude", "date", "satellite", "instrument"]
+    df = df.rename(columns={"acq_date": "Tanggal"})
+    selected_cols = ["latitude", "longitude", "Tanggal", "satellite", "instrument"]
     df = df[selected_cols]
 
     df["latitude"] = df["latitude"].astype(str).str.replace(",", ".").astype(float)
     df["longitude"] = df["longitude"].astype(str).str.replace(",", ".").astype(float)
-    df["date"] = pd.to_datetime(df["date"], errors="coerce")
+    df["Tanggal"] = pd.to_datetime(df["Tanggal"], errors="coerce")
 
     gdf_points = gpd.GeoDataFrame(
         df,
@@ -41,12 +41,10 @@ else:
 
     lulc_url = "https://drive.google.com/uc?export=download&id=1TdLkZuxUAbjLhY6WyJIkXwe3q49Uu5fg"
     lulc_path = "data/LULC.json"
-
     os.makedirs("data", exist_ok=True)
     r = requests.get(lulc_url)
     with open(lulc_path, "wb") as f:
         f.write(r.content)
-
     gdf_lulc = gpd.read_file(lulc_path).to_crs("EPSG:4326")
 
     gdf_join = gpd.sjoin(
@@ -62,14 +60,15 @@ else:
     ).drop(columns=["index_right"])
 
     gdf_result = gdf_join.rename(columns={
-        "nama_kel": "village",
-        "Owner": "owner",
-        "LC23": "LC"
+        "nama_kel": "Desa",
+        "Owner": "Owner",
+        "LC23": "Penutup Lahan",
+        "date": "Tanggal"
     })
     gdf_result["Ket"] = "Titik Api"
 
-    final_cols = ["latitude", "longitude", "date", "satellite", "instrument",
-                  "owner", "village", "LC", "Blok", "Ket"]
+    final_cols = ["latitude", "longitude", "Tanggal", "satellite", "instrument",
+                  "Owner", "Desa", "Penutup Lahan", "Blok", "Ket"]
     gdf_result = gdf_result[final_cols]
 
     spreadsheet_id_target = "1QRsiwK-3vlEU8991xsFsFvWdmyeuMTvSnATxxWRZEfk"
@@ -79,22 +78,25 @@ else:
     df_existing = pd.DataFrame(worksheet_target.get_all_records())
 
     if not df_existing.empty:
+        df_existing["Tanggal"] = pd.to_datetime(df_existing["Tanggal"], errors="coerce").dt.strftime("%Y-%m-%d")
+        gdf_result["Tanggal"] = pd.to_datetime(gdf_result["Tanggal"], errors="coerce").dt.strftime("%Y-%m-%d")
+
         df_existing["key"] = (
             df_existing["latitude"].astype(str) + "_" +
             df_existing["longitude"].astype(str) + "_" +
-            df_existing["date"].astype(str)
+            df_existing["Tanggal"].astype(str)
         )
         gdf_result["key"] = (
             gdf_result["latitude"].astype(str) + "_" +
             gdf_result["longitude"].astype(str) + "_" +
-            gdf_result["date"].astype(str)
+            gdf_result["Tanggal"].astype(str)
         )
+
         gdf_result = gdf_result[~gdf_result["key"].isin(df_existing["key"])]
         gdf_result = gdf_result.drop(columns=["key"])
 
     if not gdf_result.empty:
-        gdf_result["date"] = pd.to_datetime(gdf_result["date"], errors="coerce")
-        gdf_result = gdf_result.sort_values(by="date", ascending=True)
+        gdf_result = gdf_result.sort_values(by="Tanggal", ascending=True)
 
         start_row = len(df_existing) + 2
         set_with_dataframe(
