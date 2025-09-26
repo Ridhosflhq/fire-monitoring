@@ -32,7 +32,9 @@ else:
         try:
             val = str(int(val)).zfill(4)
             hh, mm = int(val[:2]), int(val[2:])
-            return datetime.strptime(f"{hh}:{mm}", "%H:%M").strftime("%I:%M:%S %p")
+            utc_time = datetime.strptime(f"{hh}:{mm}", "%H:%M")
+            wib_time = utc_time + timedelta(hours=7) 
+            return wib_time.strftime("%-I:%M:%S %p") 
         except:
             return None
 
