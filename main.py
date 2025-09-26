@@ -51,7 +51,7 @@ else:
     gdf_desa = gpd.read_file(desa_path).to_crs("EPSG:4326")
     gdf_pemilik = gpd.read_file(pemilik_path).to_crs("EPSG:4326")
 
-    lulc_url = "https://drive.google.com/uc?export=download&id=1sDmDvHRkjVvvyfhj2V-qZ0DG8YxgMA5M"
+    lulc_url = "https://drive.google.com/uc?export=download&id=1CzaSCquGuJNjtqCaFsRezcy2PbcyOqMg"
     lulc_path = "data/LULC.json"
     os.makedirs("data", exist_ok=True)
     r = requests.get(lulc_url)
