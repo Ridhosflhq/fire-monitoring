@@ -18,6 +18,7 @@ df = pd.DataFrame(worksheet_source.get_all_records())
 if df.empty:
     print("Data is empty. No data to process.")
 else:
+
     df.columns = df.columns.astype(str).str.strip().str.lower()
     df = df.rename(columns={"acq_date": "Tanggal", "acq_time": "JamRaw"})
     selected_cols = ["latitude", "longitude", "Tanggal", "JamRaw", "satellite", "instrument"]
@@ -30,7 +31,7 @@ else:
 
     def convert_acq_time(val):
         try:
-            val = str(int(val)).zfill(4) 
+            val = str(int(val)).zfill(4)
             hh, mm = int(val[:2]), int(val[2:])
             return datetime.strptime(f"{hh}:{mm}", "%H:%M").strftime("%I:%M:%S %p")
         except:
@@ -47,16 +48,19 @@ else:
 
     desa_path = "data/Desa.json"
     pemilik_path = "data/PemilikLahan.json"
+    blok_path = "data/blok.json"
 
     gdf_desa = gpd.read_file(desa_path).to_crs("EPSG:4326")
     gdf_pemilik = gpd.read_file(pemilik_path).to_crs("EPSG:4326")
+    gdf_blok = gpd.read_file(blok_path).to_crs("EPSG:4326")
 
-    lulc_url = "https://drive.google.com/uc?export=download&id=1CzaSCquGuJNjtqCaFsRezcy2PbcyOqMg"
+    lulc_url = "ttps://drive.google.com/uc?export=download&id=1uy1VJruyiwsZBcdv5YYRTI9EcAWZVB2O"
     lulc_path = "data/LULC.json"
     os.makedirs("data", exist_ok=True)
-    r = requests.get(lulc_url)
-    with open(lulc_path, "wb") as f:
-        f.write(r.content)
+    if not os.path.exists(lulc_path):
+        r = requests.get(lulc_url)
+        with open(lulc_path, "wb") as f:
+            f.write(r.content)
     gdf_lulc = gpd.read_file(lulc_path).to_crs("EPSG:4326")
 
     gdf_join = gpd.sjoin(
@@ -68,7 +72,11 @@ else:
     ).drop(columns=["index_right"])
 
     gdf_join = gpd.sjoin(
-        gdf_join, gdf_lulc[["Class23", "Blok", "geometry"]], predicate="within"
+        gdf_join, gdf_blok[["Blok", "geometry"]], predicate="within"
+    ).drop(columns=["index_right"])
+
+    gdf_join = gpd.sjoin(
+        gdf_join, gdf_lulc[["Class23", "geometry"]], predicate="within"
     ).drop(columns=["index_right"])
 
     gdf_result = gdf_join.rename(columns={
@@ -78,7 +86,6 @@ else:
         "date": "Tanggal"
     })
     gdf_result["Ket"] = "Titik Api"
-
     gdf_result["Desa"] = gdf_result["Desa"].str.title()
 
     final_cols = ["latitude", "longitude", "Tanggal", "Jam", "satellite", "instrument",
