@@ -18,7 +18,6 @@ df = pd.DataFrame(worksheet_source.get_all_records())
 if df.empty:
     print("Data is empty. No data to process.")
 else:
-
     df.columns = df.columns.astype(str).str.strip().str.lower()
     df = df.rename(columns={"acq_date": "Tanggal", "acq_time": "JamRaw"})
     selected_cols = ["latitude", "longitude", "Tanggal", "JamRaw", "satellite", "instrument"]
@@ -87,6 +86,11 @@ else:
     })
     gdf_result["Ket"] = "Titik Api"
     gdf_result["Desa"] = gdf_result["Desa"].str.title()
+
+    if "Blok" in gdf_result.columns:
+        gdf_result["Blok"] = gdf_result["Blok"].astype(str).apply(
+            lambda x: f"Blok {x}" if not x.startswith("Blok") else x
+        )
 
     final_cols = ["latitude", "longitude", "Tanggal", "Jam", "satellite", "instrument",
                   "Owner", "Desa", "Penutup Lahan", "Blok", "Ket"]
