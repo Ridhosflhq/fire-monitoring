@@ -2,8 +2,16 @@ name: Daily Fire Monitoring
 
 on:
   schedule:
+    # 12:00 WIB (05:00 UTC)
+    - cron: "0 5 * * *"
+    # 13:00 WIB (06:00 UTC)
+    - cron: "0 6 * * *"
+    # 14:00 WIB (07:00 UTC)
+    - cron: "0 7 * * *"
+    # 15:00 WIB (08:00 UTC)
+    - cron: "0 8 * * *"
     # 16:00 WIB (09:00 UTC)
-    # - cron: "0 9 * * *"
+    - cron: "0 9 * * *"
     # 17:00 WIB (10:00 UTC)
     - cron: "0 10 * * *"
   workflow_dispatch:
