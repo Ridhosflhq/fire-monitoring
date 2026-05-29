@@ -8,10 +8,6 @@ import requests
 from gspread_dataframe import set_with_dataframe
 from datetime import datetime, timedelta, timezone
 
-# =========================================================
-# GOOGLE AUTH
-# =========================================================
-
 service_account_info = json.loads(
     os.environ["GCP_CREDENTIALS"]
 )
@@ -19,10 +15,6 @@ service_account_info = json.loads(
 gc = gspread.service_account_from_dict(
     service_account_info
 )
-
-# =========================================================
-# SOURCE SPREADSHEET
-# =========================================================
 
 spreadsheet_id_source = (
     "1s7jnrnlSpyGdKHuNYK1XasveO7u_ESTv1mkpxQXTHAI"
@@ -38,19 +30,11 @@ df = pd.DataFrame(
     worksheet_source.get_all_records()
 )
 
-# =========================================================
-# CHECK EMPTY
-# =========================================================
-
 if df.empty:
 
     print("No hotspot data found.")
 
 else:
-
-    # =====================================================
-    # CLEAN COLUMN
-    # =====================================================
 
     df.columns = (
         df.columns
@@ -59,9 +43,6 @@ else:
         .str.lower()
     )
 
-    # =====================================================
-    # REQUIRED COLUMN CHECK
-    # =====================================================
 
     required_cols = [
         "latitude",
@@ -83,15 +64,7 @@ else:
             f"Missing columns: {missing_cols}"
         )
 
-    # =====================================================
-    # SELECT COLUMNS
-    # =====================================================
-
     df = df[required_cols]
-
-    # =====================================================
-    # CLEAN COORDINATE
-    # =====================================================
 
     df["latitude"] = (
         df["latitude"]
@@ -106,10 +79,6 @@ else:
         .str.replace(",", ".")
         .astype(float)
     )
-
-    # =====================================================
-    # UTC → WIB CONVERSION
-    # =====================================================
 
     def convert_datetime(row):
 
@@ -168,17 +137,9 @@ else:
         axis=1
     )
 
-    # =====================================================
-    # REMOVE INVALID DATETIME
-    # =====================================================
-
     df = df.dropna(
         subset=["Tanggal", "Jam"]
     )
-
-    # =====================================================
-    # CREATE GEODATAFRAME
-    # =====================================================
 
     gdf_points = gpd.GeoDataFrame(
 
@@ -192,10 +153,6 @@ else:
         crs="EPSG:4326"
 
     )
-
-    # =====================================================
-    # LOAD SPATIAL DATA
-    # =====================================================
 
     desa_path = "data/Desa.json"
 
@@ -217,10 +174,6 @@ else:
     gdf_blok = gpd.read_file(
         blok_path
     ).to_crs("EPSG:4326")
-
-    # =====================================================
-    # LOAD LULC
-    # =====================================================
 
     lulc_url = (
         "https://drive.google.com/uc?"
@@ -252,10 +205,6 @@ else:
     gdf_lulc = gpd.read_file(
         lulc_path
     ).to_crs("EPSG:4326")
-
-    # =====================================================
-    # SPATIAL JOIN
-    # =====================================================
 
     print("Spatial join Desa...")
 
@@ -321,10 +270,6 @@ else:
         columns=["index_right"]
     )
 
-    # =====================================================
-    # RENAME COLUMN
-    # =====================================================
-
     gdf_result = gdf_join.rename(columns={
 
         "nama_kel": "Desa",
@@ -334,10 +279,6 @@ else:
         "Class23": "Penutup Lahan"
 
     })
-
-    # =====================================================
-    # SAFE COLUMN
-    # =====================================================
 
     for col in [
         "Owner",
@@ -349,10 +290,6 @@ else:
         if col not in gdf_result.columns:
 
             gdf_result[col] = None
-
-    # =====================================================
-    # FORMAT COLUMN
-    # =====================================================
 
     gdf_result["Ket"] = "Titik Api"
 
@@ -383,10 +320,6 @@ else:
 
     )
 
-    # =====================================================
-    # FINAL COLUMN
-    # =====================================================
-
     final_cols = [
 
         "latitude",
@@ -411,12 +344,8 @@ else:
 
     gdf_result = gdf_result[final_cols]
 
-    # =====================================================
-    # TARGET SPREADSHEET
-    # =====================================================
-
     spreadsheet_id_target = (
-        "1o6MMYiH4CWORlONHBbG42PMMJWVJRBWTYdgPKtArb30"
+        "1QRsiwK-3vlEU8991xsFsFvWdmyeuMTvSnATxxWRZEfk"
     )
 
     sh_target = gc.open_by_key(
@@ -425,17 +354,11 @@ else:
 
     worksheet_target = sh_target.get_worksheet(0)
 
-    # =====================================================
-    # EXISTING DATA
-    # =====================================================
 
     df_existing = pd.DataFrame(
         worksheet_target.get_all_records()
     )
 
-    # =====================================================
-    # REMOVE DUPLICATE
-    # =====================================================
 
     if not df_existing.empty:
 
@@ -496,10 +419,6 @@ else:
             columns=["key"]
         )
 
-    # =====================================================
-    # SORT DATETIME
-    # =====================================================
-
     gdf_result["datetime_sort"] = pd.to_datetime(
 
         gdf_result["Tanggal"] + " " +
@@ -519,10 +438,6 @@ else:
     gdf_result = gdf_result.drop(
         columns=["datetime_sort"]
     )
-
-    # =====================================================
-    # APPEND TO SHEET
-    # =====================================================
 
     if not gdf_result.empty:
 
@@ -550,14 +465,10 @@ else:
 
         print("No new hotspot data.")
 
-# =========================================================
-# LOG LAST RUNTIME
-# =========================================================
-
 try:
 
     sh_target = gc.open_by_key(
-        "1o6MMYiH4CWORlONHBbG42PMMJWVJRBWTYdgPKtArb30"
+        "1QRsiwK-3vlEU8991xsFsFvWdmyeuMTvSnATxxWRZEfk"
     )
 
     try:
