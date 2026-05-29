@@ -1,4 +1,3 @@
-```python
 import os
 import json
 import pandas as pd
@@ -616,4 +615,3 @@ except Exception as e:
     print(
         f"Failed runtime logging: {e}"
     )
-```
