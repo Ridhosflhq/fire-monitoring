@@ -2,7 +2,7 @@ name: Daily Fire Monitoring
 
 on:
   schedule:
-    - cron: "0 2-11 * * *"
+    - cron: "0 4-11 * * *"
 
   workflow_dispatch:
 
