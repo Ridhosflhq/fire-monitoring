@@ -2,10 +2,19 @@ name: Daily Fire Monitoring
 
 on:
   schedule:
-    - cron: "0 4-11 * * *"
+    # 12.00–16.45 WIB (05.00–09.45 UTC)
+    - cron: "*/15 5-9 * * *"
+
+    # 17.00 WIB (10.00 UTC)
+    - cron: "0 10 * * *"
+
+    # 18.00, 19.00, 20.00 WIB
+    - cron: "0 11-13 * * *"
+
+    # 21.00, 00.00, 03.00, 06.00, 09.00 WIB
+    - cron: "0 14,17,20,23,2,5 * * *"
 
   workflow_dispatch:
-
 
 jobs:
   run-script:
