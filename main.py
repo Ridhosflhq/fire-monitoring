@@ -254,7 +254,7 @@ else:
         columns=["index_right"]
     )
 
-    print("Spatial join LULC...")
+    print("Spatial join LULC.")
 
     gdf_join = gpd.sjoin(
 
