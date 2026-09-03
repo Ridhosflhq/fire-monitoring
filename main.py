@@ -42,15 +42,14 @@ else:
         .str.strip()
         .str.lower()
     )
-
-
     required_cols = [
         "latitude",
         "longitude",
         "acq_date",
         "acq_time",
         "satellite",
-        "instrument"
+        "instrument",
+        "confidence"
     ]
 
     missing_cols = [
@@ -78,6 +77,64 @@ else:
         .astype(str)
         .str.replace(",", ".")
         .astype(float)
+    )
+
+    def normalize_confidence(val):
+        """
+        Menyeragamkan nilai confidence menjadi simbol huruf:
+        l = low (0-30), n = nominal (30-80), h = high (80-100)
+
+        Menerima:
+        - Angka (VIIRS): 0-100
+        - Huruf/simbol yang sudah ada (MODIS): l, n, h
+        - Kata penuh: low, nominal, high
+        """
+
+        if pd.isnull(val):
+            return None
+
+        s = str(val).strip()
+
+        if s == "" or s.lower() == "none":
+            return None
+
+        s_lower = s.lower()
+
+        if s_lower in ["l", "n", "h"]:
+            return s_lower
+
+        word_map = {
+            "low": "l",
+            "nominal": "n",
+            "high": "h"
+        }
+
+        if s_lower in word_map:
+            return word_map[s_lower]
+
+        try:
+
+            num = float(s.replace(",", "."))
+
+            if num < 30:
+                return "l"
+
+            elif num < 80:
+                return "n"
+
+            else:
+                return "h"
+
+        except ValueError:
+
+            print(
+                f"Confidence tidak dikenali, dikosongkan: {val}"
+            )
+
+            return None
+
+    df["confidence"] = df["confidence"].apply(
+        normalize_confidence
     )
 
     def convert_datetime(row):
@@ -338,7 +395,9 @@ else:
 
         "Blok",
 
-        "Ket"
+        "Ket",
+
+        "confidence"
 
     ]
 
